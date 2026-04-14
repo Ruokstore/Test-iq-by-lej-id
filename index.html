@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extreme IQ Test - Auto Next Mode</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #0ea5e9; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--primary); color: var(--text); display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 700px; }
+        .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .stopwatch { font-size: 32px; color: var(--accent); text-align: center; display: block; margin-bottom: 20px; font-family: monospace; font-weight: bold; }
+        .option { background: #334155; padding: 18px; margin: 10px 0; border-radius: 10px; cursor: pointer; transition: 0.1s; border: 2px solid transparent; font-size: 16px; }
+        .option:hover { background: #475569; }
+        .option:active { background: var(--accent); transform: scale(0.98); }
+        button { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; background: #334155; color: white; }
+        #result-screen { display: none; text-align: center; }
+        .progress { height: 8px; background: #334155; margin-bottom: 20px; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.3s; }
+        .q-fade { animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen" class="card">
+        <h2 style="text-align:center">Speed IQ Challenge</h2>
+        <p style="text-align:center; color: #94a3b8;">50 Soal: Klik jawaban dan soal akan otomatis berganti!</p>
+        <input type="text" id="name" placeholder="Nama Lengkap">
+        <input type="number" id="age" placeholder="Umur">
+        <button onclick="start()">MULAI TEST</button>
+    </div>
+
+    <div id="quiz-screen" class="card" style="display:none">
+        <span class="stopwatch" id="timer">00:00</span>
+        <div class="progress"><div id="prog-bar" class="progress-fill"></div></div>
+        <div id="q-meta" style="font-size: 14px; color: #94a3b8; margin-bottom: 10px;"></div>
+        <div id="question-container" class="q-fade">
+            <h3 id="q-text"></h3>
+            <div id="options"></div>
+        </div>
+        <p style="font-size: 12px; color: #64748b; text-align: center; margin-top: 20px;">Klik pada jawaban untuk lanjut otomatis.</p>
+    </div>
+
+    <div id="result-screen" class="card">
+        <h2>HASIL ANALISIS</h2>
+        <h1 id="res-iq" style="font-size: 60px; color: var(--accent);">0</h1>
+        <div id="res-info" style="margin-bottom: 20px; font-size: 18px;"></div>
+        <p id="res-desc" style="background:#334155; padding:20px; border-radius:10px; line-height: 1.6;"></p>
+        <button onclick="location.reload()">ULANGI TEST</button>
+    </div>
+</div>
+
+<script>
+    const allQuestions = [
+        {q: "Berapa hasil dari 40 : 1/2 + 10?", a: "90", o: ["30", "90", "25", "50"]},
+        {q: "Jika 1=5, 2=10, 3=15, 4=20, maka 5=?", a: "1", o: ["25", "1", "30", "5"]},
+        {q: "10 - 10 x 10 + 10 = ?", a: "-80", o: ["0", "100", "-80", "-90"]},
+        {q: "Jika 3 kucing tangkap 3 tikus dalam 3 menit, berapa lama 100 kucing tangkap 100 tikus?", a: "3 menit", o: ["100 menit", "3 menit", "1 menit", "33 menit"]},
+        {q: "Tongkat & bola = Rp 1.100. Tongkat lebih mahal Rp 1.000 dari bola. Harga bola?", a: "Rp 50", o: ["Rp 100", "Rp 50", "Rp 10", "Rp 500"]},
+        {q: "Berapa banyak angka 9 dari 1 sampai 100?", a: "20", o: ["10", "19", "20", "21"]},
+        {q: "Hasil dari 2 + 2 x 2?", a: "6", o: ["8", "6", "4", "2"]},
+        {q: "Jika 8 + 2 = 16106, berapa 5 + 4?", a: "2091", o: ["2091", "9120", "2019", "9"]},
+        {q: "Berapa kali kamu bisa mengurangi 5 dari 25?", a: "1 kali", o: ["5 kali", "1 kali", "25 kali", "0"]},
+        {q: "Jika ada 12 ikan dan 5 tenggelam, berapa yang sisa?", a: "12", o: ["7", "12", "5", "0"]},
+        {q: "Ayah Mary punya 5 anak: Nana, Nene, Nini, Nono. Siapa anak ke-5?", a: "Mary", o: ["Nunu", "Nene", "Mary", "Nono"]},
+        {q: "Berapa bulan yang punya 28 hari?", a: "12 bulan", o: ["1 bulan", "12 bulan", "Februari saja", "Tidak ada"]},
+        {q: "Jika kamu salip orang posisi ke-2, kamu di posisi?", a: "2", o: ["1", "2", "3", "Terakhir"]},
+        {q: "Apa yang punya leher tapi tidak punya kepala?", a: "Botol", o: ["Zebra", "Botol", "Kaos", "Jerapah"]},
+        {q: "Siapa yang selalu datang tapi tidak pernah sampai?", a: "Besok", o: ["Kereta", "Besok", "Hujan", "Pos"]},
+        {q: "Diambil malah jadi besar, apakah itu?", a: "Lubang", o: ["Sampah", "Lubang", "Utang", "Balon"]},
+        {q: "Apa yang bisa lu lihat di tengah air?", a: "Huruf i", o: ["Ikan", "Huruf i", "Bayangan", "Jembatan"]},
+        {q: "Makin ditarik makin pendek?", a: "Rokok", o: ["Tali", "Karet", "Rokok", "Umur"]},
+        {q: "Apa yang naik tapi tidak pernah turun?", a: "Umur", o: ["Balon", "Tangga", "Umur", "Harga"]},
+        {q: "Berapa banyak tanah di lubang diameter 1m kedalaman 1m?", a: "Tidak ada", o: ["1m kubik", "Tidak ada", "50kg", "10kg"]},
+        {q: "Jika pesawat jatuh di perbatasan, di mana selamat dimakamkan?", a: "Tidak dimakamkan", o: ["Indonesia", "Malaysia", "Tengah", "Tidak dimakamkan"]},
+        {q: "1, 1, 2, 3, 5, 8, ... Berapa angka selanjutnya?", a: "13", o: ["10", "11", "12", "13"]},
+        {q: "Jika 4 orang buat 4 lubang dalam 4 hari, berapa lama 1 orang buat 1 lubang?", a: "4 hari", o: ["1 hari", "4 hari", "16 hari", "2 hari"]},
+        {q: "Mana yang lebih berat: 1kg Besi atau 1kg Kapas?", a: "Sama saja", o: ["Besi", "Kapas", "Sama saja", "Bumi"]},
+        {q: "Berapa jumlah sudut pada segitiga?", a: "180 derajat", o: ["90", "180", "360", "45"]},
+        {q: "Lanjutan: J, F, M, A, M, ...", a: "J", o: ["A", "S", "O", "J"]},
+        {q: "Berapa hasil 2^3?", a: "8", o: ["6", "8", "9", "5"]},
+        {q: "Ada berapa huruf dalam 'Abjad'?", a: "5", o: ["26", "5", "1", "10"]},
+        {q: "Siapa penemu gaya gravitasi?", a: "Newton", o: ["Einstein", "Newton", "Tesla", "Galileo"]},
+        {q: "Jika hari ini Senin, hari apa 3 hari setelah kemarin?", a: "Rabu", o: ["Selasa", "Rabu", "Kamis", "Jumat"]},
+        {q: "Berapa kaki yang dimiliki 2 ekor bebek dan 3 ekor kucing?", a: "16", o: ["10", "12", "16", "14"]},
+        {q: "Jika 0=0, 1=1, 2=4, 3=9, maka 4=?", a: "16", o: ["8", "12", "16", "20"]},
+        {q: "Kancil punya 4 kaki, ayam punya 2 kaki. Kalau mereka digabung jadi?", a: "Hewan", o: ["6 kaki", "Hewan", "Kancilayam", "Kebun binatang"]},
+        {q: "Huruf ke-4 dalam alfabet adalah?", a: "D", o: ["C", "D", "E", "F"]},
+        {q: "Berapa hasil dari 5 + 5 x 5?", a: "30", o: ["50", "30", "25", "15"]},
+        {q: "Apa yang bisa terbang tapi tidak punya sayap?", a: "Waktu", o: ["Pesawat", "Waktu", "Awan", "Angin"]},
+        {q: "Jika kamu punya 1 korek api dan masuk ruangan gelap berisi lilin, lampu minyak, dan kayu bakar, apa yang dinyalakan dulu?", a: "Korek api", o: ["Lilin", "Lampu minyak", "Korek api", "Kayu"]},
+        {q: "Berapa digit angka terakhir dari 5 x 5 x 5 x 5?", a: "5", o: ["0", "5", "25", "625"]},
+        {q: "Seekor siput di sumur 10m. Siang naik 3m, malam turun 2m. Hari ke berapa ia keluar?", a: "8", o: ["10", "9", "8", "7"]},
+        {q: "Apa yang bisa dipegang tangan kiri tapi tidak bisa dipegang tangan kanan?", a: "Siku kanan", o: ["Siku kanan", "Pulpen", "Meja", "Tangan kiri"]},
+        {q: "Berapa hasil 100 - 10%?", a: "90", o: ["90", "99", "10", "0"]},
+        {q: "Warna apa yang dihasilkan jika biru dan kuning dicampur?", a: "Hijau", o: ["Ungu", "Hijau", "Cokelat", "Oren"]},
+        {q: "Jika lampu merah menyala, kita harus?", a: "Berhenti", o: ["Jalan", "Berhenti", "Lari", "Tidur"]},
+        {q: "Ibu kota Indonesia saat ini?", a: "Jakarta", o: ["Bandung", "Jakarta", "IKN", "Surabaya"]},
+        {q: "Berapa jumlah provinsi di Indonesia saat ini?", a: "38", o: ["34", "35", "37", "38"]},
+        {q: "Binatang apa yang tidurnya berdiri?", a: "Kuda", o: ["Kuda", "Kucing", "Anjing", "Sapi"]},
+        {q: "Simbol kimia air?", a: "H2O", o: ["CO2", "H2O", "O2", "NaCl"]},
+        {q: "Gunung tertinggi di dunia?", a: "Everest", o: ["Semeru", "Everest", "Fuji", "K2"]},
+        {q: "Apa yang selalu tetap meski dibagi-bagi?", a: "Ilmu", o: ["Uang", "Ilmu", "Kue", "Waktu"]},
+        {q: "Berapa detik dalam 1 menit?", a: "60", o: ["30", "60", "100", "3600"]}
+    ];
+
+    let current = 0;
+    let score = 0;
+    let timer;
+    let sec = 0;
+
+    function start() {
+        if(!document.getElementById('name').value || !document.getElementById('age').value) return alert("Isi data!");
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        timer = setInterval(() => {
+            sec++;
+            let m = Math.floor(sec/60);
+            let s = sec%60;
+            document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }, 1000);
+        load();
+    }
+
+    function load() {
+        let qData = allQuestions[current];
+        document.getElementById('q-meta').innerText = `Pertanyaan ${current + 1} / 50`;
+        document.getElementById('prog-bar').style.width = `${((current)/50)*100}%`;
+        document.getElementById('q-text').innerText = qData.q;
+        
+        let optDiv = document.getElementById('options');
+        optDiv.innerHTML = '';
+
+        // Gunakan animasi fade setiap ganti soal
+        const container = document.getElementById('question-container');
+        container.classList.remove('q-fade');
+        void container.offsetWidth; // trigger reflow
+        container.classList.add('q-fade');
+        
+        qData.o.forEach(o => {
+            let d = document.createElement('div');
+            d.className = 'option';
+            d.innerText = o;
+            d.onclick = () => checkAnswer(o);
+            optDiv.appendChild(d);
+        });
+    }
+
+    function checkAnswer(chosen) {
+        if(chosen === allQuestions[current].a) score++;
+        
+        current++;
+        if(current < allQuestions.length) {
+            load();
+        } else {
+            finish();
+        }
+    }
+
+    function finish() {
+        clearInterval(timer);
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        let age = parseInt(document.getElementById('age').value);
+        let name = document.getElementById('name').value;
+        
+        // IQ Formula: Accuracy + Time Bonus + Age Correction
+        let accuracy = (score / 50) * 100;
+        let speedBonus = Math.max(0, (500 - sec) / 10);
+        let iq = Math.round(accuracy + speedBonus + (20 - age) + 40);
+
+        document.getElementById('res-iq').innerText = iq;
+        document.getElementById('res-info').innerText = `${name} (${age} thn) | Benar: ${score} | Waktu: ${sec}s`;
+        
+        let desc = "";
+        if(iq > 130) desc = "Jenius! Kamu punya kecepatan berpikir yang sangat langka. Kamu hampir tidak bisa dijebak.";
+        else if(iq > 110) desc = "Sangat Cerdas. Kamu cepat dalam mengambil keputusan dan memiliki logika yang kuat.";
+        else if(iq > 90) desc = "Rata-rata. Kamu cukup teliti, namun terkadang kecepatanmu berkurang di soal matematika.";
+        else desc = "Standar. Kamu perlu lebih sering melatih otak dengan teka-teki logika agar tidak mudah terjebak.";
+        
+        document.getElementById('res-desc').innerText = desc;
+    }
+</script>
+</body>
+</html>
